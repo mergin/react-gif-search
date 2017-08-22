@@ -1,13 +1,8 @@
 import React from 'react';
 
 class SearchBar extends React.Component {
-    constructor() {
-        super();
-        this.state = { term: '' }
-    }
 
     onInputChange(term) {
-        this.setState({term});
         this.props.onTermChange(term);
     }
 
