@@ -1,43 +1,74 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import * as Actions from '../actions';
-import GifList from '../components/GifList';
-import SearchBar from '../components/SearchBar';
-import '../styles/app.css';
+import React from "react";
+import { ConnectedRouter } from "react-router-redux";
+import { Route, Redirect } from "react-router-dom";
+import { history } from "./../store/configureStore";
+import { connect } from "react-redux";
 
+import Header from "../containers/Header";
+import Home from "../containers/Home";
+import Signup from "../containers/Signup";
+import Login from "../containers/Login";
+import Favorites from "../containers/Favorites";
+
+const PrivateRoute = ({ component: Component, authenticated, ...props }) => {
+  return (
+    <Route
+      {...props}
+      render={props =>
+        authenticated === true
+          ? <Component {...props} />
+          : <Redirect
+              to={{ pathname: "/login", state: { from: props.location } }}
+            />}
+    />
+  );
+};
+
+const PublicRoute = ({ component: Component, authenticated, ...props }) => {
+  return (
+    <Route
+      {...props}
+      render={props =>
+        authenticated === false
+          ? <Component {...props} />
+          : <Redirect to="/favorites" />}
+    />
+  );
+};
 
 class App extends React.Component {
-    render() {
-        return (
-            <div>
-                <SearchBar onTermChange={this.props.actions.requestGifs} />
-                <GifList gifs={ this.props.gifs } />
-            </div>
-        );
-    }
+  render() {
+    return (
+      <ConnectedRouter history={history}>
+        <div>
+          <Header />
+
+          <div className="container">
+            <Route exact path="/" component={Home} />
+            <PublicRoute
+              authenticated={this.props.authenticated}
+              path="/signup"
+              component={Signup}
+            />
+            <PublicRoute
+              authenticated={this.props.authenticated}
+              path="/login"
+              component={Login}
+            />
+            <PrivateRoute
+              authenticated={this.props.authenticated}
+              path="/favorites"
+              component={Favorites}
+            />
+          </div>
+        </div>
+      </ConnectedRouter>
+    );
+  }
 }
 
-/* 
- * links the gifs from GifsReducer to this.props.gifs on the App component
- * can access the state through the connect()() call
- */
-function mapStateToProps(state) {
-    return {
-        gifs: state.gifs.data
-    };
-}
+const mapStateToProps = state => {
+  return { authenticated: state.auth.authenticated };
+};
 
-function mapDispatchToProps(dispatch) {
-    return {
-        actions: bindActionCreators(Actions, dispatch)
-    };
-}
- 
-/* 
- * allows the App component to subscribe to the Redux store update;
- * whenever the store changes, mapStateToProps is called
- * mapStateToProps returns a plain object, and it then becomes available on the App component as props 
- * The <Provider> made the Redux store available to any connect()() calls
- */
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default connect(mapStateToProps)(App);
